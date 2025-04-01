@@ -262,6 +262,7 @@ void _cleanup_universal(void *ptr);
     VECTOR_FUNCTION_PROTOTYPES(__TYPE__, __DECLARED_NAME__)                                  \
     VECTOR_FUNCTION_DEFINITIONS(__TYPE__, __DECLARED_NAME__, __ELEMENT_CONSTRUCTOR__, __ELEMENT_DESTRUCTOR__)
 
+#if defined(__GNUC__) || defined(__clang__)
 /**
  * Predefined for automatic cleanup
  *
@@ -300,5 +301,8 @@ void _cleanup_universal(void *ptr)
         *_ptr = NULL;
     }
 }
+#else
+#define scoped assert(0 && "scoped is not supported on this compiler.");
+#endif
 
 #endif
