@@ -5,7 +5,8 @@
 #include <time.h>
 #include "vector.h"
 
-int rand_int(int min, int max){
+int rand_int(int min, int max)
+{
     return (rand() % (max - min + 1)) + min;
 }
 
@@ -127,7 +128,6 @@ void TEST6()
     assert(strcmp(vec->front(vec), str) != 0);
     assert(strcmp(vec->back(vec), str) != 0);
 
-
     assert(vec->pop(vec) == 1);
     assert(vec->empty(vec) == 1);
 
@@ -140,32 +140,32 @@ void TEST7()
     vector_charp *vec = new_vector_charp();
 
     int len_words = rand_int(300, 600);
-    char **words = calloc(len_words, sizeof(char*));
+    char **words = calloc(len_words, sizeof(char *));
 
-    for(int i = 0; i < len_words; ++i){
+    for (int i = 0; i < len_words; ++i)
+    {
         int len_word = rand_int(2, 15);
         char *word = calloc(len_word + 1, sizeof(char));
 
-        for(int k = 0; k < len_word; ++k)
+        for (int k = 0; k < len_word; ++k)
             word[k] = rand_int('A', 'Z');
 
         words[i] = word;
         vec->push(vec, word);
     }
 
-    for(int i = 0; i < len_words; ++i)
+    for (int i = 0; i < len_words; ++i)
         assert(strcmp(vec->at(vec, i), words[i]) == 0);
 
-    for(int i = 0; i < len_words; ++i){
+    for (int i = 0; i < len_words; ++i)
+    {
         words[i][0] = words[i][0] + 1;
-    }   
+    }
 
-    for(int i = 0; i < len_words; ++i)
+    for (int i = 0; i < len_words; ++i)
         assert(strcmp(vec->at(vec, i), words[i]) != 0);
-    
 
-
-    for(int i = 0; i < len_words; ++i)
+    for (int i = 0; i < len_words; ++i)
         free(words[i]);
     free(words);
     vec->free_memory(vec);
