@@ -10,6 +10,25 @@ int rand_int(int min, int max)
     return (rand() % (max - min + 1)) + min;
 }
 
+char *_strdup(const char *str)
+{
+    if (str == NULL)
+        return NULL;
+    size_t len = strlen(str) + 1;
+    char *copy = malloc(len);
+    if (copy == NULL)
+        return NULL;
+    memcpy(copy, str, len);
+    return copy;
+}
+void _deconstructor(char *str)
+{
+    free(str);
+}
+
+VECTOR(int, vector_int, NULL, NULL);
+VECTOR(char *, vector_charp, _strdup, _deconstructor);
+
 /* INT VECTOR */
 void TEST1()
 {
@@ -24,6 +43,18 @@ void TEST1()
         assert(vec->at(vec, i) == array[i]);
 
     vec->free_memory(vec);
+}
+void TEST1_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_int *vec = new_vector_int();
+    int array[] = {124, 125, 643, 12, 1425, 51, 34, 562, 12, 432, 523};
+
+    for (int i = 0; i < sizeof(array) / sizeof(int); ++i)
+        vec->push(vec, array[i]);
+
+    for (int i = 0; i < sizeof(array) / sizeof(int); ++i)
+        assert(vec->at(vec, i) == array[i]);
 }
 
 void TEST2()
@@ -44,6 +75,26 @@ void TEST2()
         assert(vec->at(vec, i) == array[i]);
 
     vec->free_memory(vec);
+}
+void TEST2_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_int *vec = new_vector_int();
+    int array[150] = {0};
+
+    for (int i = 0; i < 150; ++i)
+    {
+        int k = rand() % __INT32_MAX__;
+
+        array[i] = k;
+        vec->push(vec, k);
+    }
+
+    vec->optimize_memory(vec);
+    assert(vec->size == 150);
+
+    for (int i = 0; i < 150; ++i)
+        assert(vec->at(vec, i) == array[i]);
 }
 
 void TEST3()
@@ -73,6 +124,34 @@ void TEST3()
 
     vec->free_memory(vec);
 }
+void TEST3_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_int *vec = new_vector_int();
+
+    int start = rand();
+    int end = rand();
+
+    vec->insert(vec, 0, start);
+    int limit = rand_int(50, 500);
+    for (int i = 0; i < limit; ++i)
+    {
+        int k = rand_int(0, __INT32_MAX__ - 1);
+        int index = rand_int(1, vec->size);
+
+        if (rand_int(0, 2) == 0)
+            vec->optimize_memory(vec);
+
+        vec->insert(vec, index, k);
+    }
+    vec->insert(vec, vec->size, end);
+
+    assert(vec->at(vec, 0) == start);
+    assert(vec->front(vec) == start);
+
+    assert(vec->at(vec, vec->size - 1) == end);
+    assert(vec->back(vec) == end);
+}
 
 void TEST4()
 {
@@ -92,6 +171,24 @@ void TEST4()
     vec->free_memory(vec);
 }
 
+void TEST4_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_int *vec = new_vector_int();
+
+    assert(vec->pop(vec) == 0);
+    assert(vec->empty(vec) == 1);
+
+    int limit = rand_int(50, 500);
+    for (int i = 0; i < limit; ++i)
+        vec->push(vec, i);
+
+    while (vec->pop(vec) == 1)
+    {
+        vec->optimize_memory(vec);
+    }
+}
+
 void TEST5()
 {
     printf("TEST: %s\n", __func__);
@@ -106,6 +203,20 @@ void TEST5()
     assert(vec->empty(vec) == 1);
 
     vec->free_memory(vec);
+}
+
+void TEST5_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_int *vec = new_vector_int();
+
+    int limit = rand_int(50, 500);
+    for (int i = 0; i < limit; ++i)
+        vec->push(vec, i);
+
+    vec->clear(vec);
+    assert(vec->pop(vec) == 0);
+    assert(vec->empty(vec) == 1);
 }
 
 //*CHAR* VECTOR*//
@@ -134,7 +245,67 @@ void TEST6()
     vec->free_memory(vec);
 }
 
+void TEST6_SCOPED()
+{
+    printf("TEST: %s\n", __func__);
+    scoped vector_charp *vec = new_vector_charp();
+
+    char str[] = "//*CHAR* VECTOR*//";
+    vec->push(vec, str);
+
+    assert(vec->empty(vec) == 0);
+
+    assert(strcmp(vec->at(vec, 0), str) == 0);
+    assert(strcmp(vec->front(vec), str) == 0);
+    assert(strcmp(vec->back(vec), str) == 0);
+
+    str[0] = 'p';
+    assert(strcmp(vec->at(vec, 0), str) != 0);
+    assert(strcmp(vec->front(vec), str) != 0);
+    assert(strcmp(vec->back(vec), str) != 0);
+
+    assert(vec->pop(vec) == 1);
+    assert(vec->empty(vec) == 1);
+}
+
 void TEST7()
+{
+    printf("TEST: %s\n", __func__);
+    vector_charp *vec = new_vector_charp();
+
+    int len_words = rand_int(300, 600);
+    char **words = calloc(len_words, sizeof(char *));
+
+    for (int i = 0; i < len_words; ++i)
+    {
+        int len_word = rand_int(2, 15);
+        char *word = calloc(len_word + 1, sizeof(char));
+
+        for (int k = 0; k < len_word; ++k)
+            word[k] = rand_int('A', 'Z');
+
+        words[i] = word;
+        vec->push(vec, word);
+    }
+
+    for (int i = 0; i < len_words; ++i)
+        assert(strcmp(vec->at(vec, i), words[i]) == 0);
+
+    for (int i = 0; i < len_words; ++i)
+    {
+        words[i][0] = words[i][0] + 1;
+    }
+
+    for (int i = 0; i < len_words; ++i)
+        assert(strcmp(vec->at(vec, i), words[i]) != 0);
+
+    for (int i = 0; i < len_words; ++i)
+        free(words[i]);
+    free(words);
+    vec->free_memory(vec);
+}
+
+void TEST7_SCOPED()
 {
     printf("TEST: %s\n", __func__);
     vector_charp *vec = new_vector_charp();
@@ -180,9 +351,16 @@ int main()
     TEST3();
     TEST4();
     TEST5();
-
     TEST6();
     TEST7();
+
+    TEST1_SCOPED();
+    TEST2_SCOPED();
+    TEST3_SCOPED();
+    TEST4_SCOPED();
+    TEST5_SCOPED();
+    TEST6_SCOPED();
+    TEST7_SCOPED();
 
     printf("All tests have been completed sucesfull\n");
     return 0;
